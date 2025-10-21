@@ -2,11 +2,6 @@ kind: pipeline
 type: docker
 name: ci/drone/pr  
 
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
-
 services:
   - name: test-db-service
     image: gvenzl/oracle-free:latest
@@ -92,17 +87,13 @@ kind: pipeline
 type: docker
 name: deployment
 
-volumes:
-- name: dockersock
-  host:
-    path: /var/run/docker.sock
-
 steps:
   - name: build-backend
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-backend:${DRONE_BRANCH} -f pharmacy/Dockerfile ./pharmacy
     when:
@@ -112,7 +103,8 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-frontend:${DRONE_BRANCH} -f frontend/Dockerfile ./frontend
     when:
@@ -122,14 +114,15 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-dev || true && docker rm backend-dev || true
       - docker stop frontend-dev || true && docker rm frontend-dev || true
       - |
         docker run -d --restart always --name backend-dev \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_LOCAL \
           -e SPRING_DATASOURCE_PASSWORD=devpass \
           -e APP_FRONTEND_URL=http://localhost:8080 \
@@ -149,14 +142,15 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
       - |
         docker run -d --restart always --name backend-uat \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT \
           -e SPRING_DATASOURCE_PASSWORD=uatpass \
           -e APP_FRONTEND_URL=http://localhost:8081 \
@@ -176,14 +170,15 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-prod || true && docker rm backend-prod || true
       - docker stop frontend-prod || true && docker rm frontend-prod || true
       - |
         docker run -d --restart always --name backend-prod \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD \
           -e SPRING_DATASOURCE_PASSWORD=prodpass \
           -e APP_FRONTEND_URL=http://localhost:8083 \
