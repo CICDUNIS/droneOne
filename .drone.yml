@@ -1,40 +1,18 @@
 kind: pipeline
 type: docker
-name: ci-cd-pipeline
+name: ci/drone/pr  
+
+platform:
+  os: linux
+  arch: arm64
 
 services:
   - name: test-db-service
     image: gvenzl/oracle-free:latest
-    container_name: oracle-pipeline-db
-    networks:
-      - local-cicd-net
     environment:
-      - ORACLE_PASSWORD=testpass
-      - APP_USER=PIPELINE_USER
-      - APP_USER_PASSWORD=testpass
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
-
-trigger:
-  event:
-    - pull_request
-  branch:
-    - dev
-    - uat
-    - master
----
-#  PULL REQUEST PIPELINE
-kind: pipeline
-type: docker
-name: pr-check
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
+      ORACLE_PASSWORD: testpass
+      APP_USER: PIPELINE_USER
+      APP_USER_PASSWORD: testpass
 
 steps:
   - name: frontend-test
@@ -55,9 +33,6 @@ steps:
         mvn verify sonar:sonar \
           -Dsonar.host.url=http://sonarqubeDrone:9000 \
           -Dsonar.token=$SONAR_TOKEN \
-          -Dsonar.pullrequest.key=${DRONE_PULL_REQUEST} \
-          -Dsonar.pullrequest.branch=${DRONE_SOURCE_BRANCH} \
-          -Dsonar.pullrequest.base=${DRONE_TARGET_BRANCH}
     depends_on: [frontend-test]
 
   - name: sonarqube-quality-gate
@@ -98,9 +73,6 @@ steps:
         fi
     depends_on: [backend-test-and-analyze]
 
-clone:
-  disable: true
-
 trigger:
   event:
     - pull_request
@@ -110,22 +82,22 @@ trigger:
     - master
 
 ---
-#  DEPLOYMENT PIPELINE
+
 kind: pipeline
 type: docker
 name: deployment
 
-volumes:
-- name: dockersock
-  host:
-    path: /var/run/docker.sock
+platform:
+  os: linux
+  arch: arm64
 
 steps:
   - name: build-backend
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-backend:${DRONE_BRANCH} -f pharmacy/Dockerfile ./pharmacy
     when:
@@ -135,7 +107,8 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-frontend:${DRONE_BRANCH} -f frontend/Dockerfile ./frontend
     when:
@@ -145,14 +118,15 @@ steps:
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-dev || true && docker rm backend-dev || true
       - docker stop frontend-dev || true && docker rm frontend-dev || true
       - |
         docker run -d --restart always --name backend-dev \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_LOCAL \
           -e SPRING_DATASOURCE_PASSWORD=devpass \
           -e APP_FRONTEND_URL=http://localhost:8080 \
@@ -168,19 +142,19 @@ steps:
     when:
       branch: dev
 
-  # --- DEPLOY TO UAT ---
   - name: deploy-uat
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
       - |
         docker run -d --restart always --name backend-uat \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT \
           -e SPRING_DATASOURCE_PASSWORD=uatpass \
           -e APP_FRONTEND_URL=http://localhost:8081 \
@@ -196,19 +170,19 @@ steps:
     when:
       branch: uat
 
-  # --- DEPLOY TO PROD ---
   - name: deploy-prod
     image: docker:20.10
     volumes:
       - name: dockersock
-        path: /var/run/docker.sock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-prod || true && docker rm backend-prod || true
       - docker stop frontend-prod || true && docker rm frontend-prod || true
       - |
         docker run -d --restart always --name backend-prod \
           --network local-cicd-net \
-          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1WELCOME/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD \
           -e SPRING_DATASOURCE_PASSWORD=prodpass \
           -e APP_FRONTEND_URL=http://localhost:8083 \
@@ -224,7 +198,6 @@ steps:
     when:
       branch: master
 
-# --- TRIGGERS ---
 trigger:
   event:
     - push
@@ -232,3 +205,4 @@ trigger:
     - dev
     - uat
     - master
+
