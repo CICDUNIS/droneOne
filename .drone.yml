@@ -9,8 +9,6 @@ platform:
 services:
   - name: test-db-service
     image: gvenzl/oracle-free:latest
-    networks:
-      - local-cicd-net
     environment:
       ORACLE_PASSWORD: testpass
       APP_USER: PIPELINE_USER
