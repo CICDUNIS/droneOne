@@ -1,6 +1,6 @@
 kind: pipeline
 type: docker
-name: pr-check
+name: ci/drone/pr  
 
 volumes:
   - name: dockersock
@@ -78,9 +78,6 @@ steps:
           exit 1 
         fi
     depends_on: [backend-test-and-analyze]
-
-clone:
-  disable: true
 
 trigger:
   event:
@@ -161,7 +158,7 @@ steps:
           --network local-cicd-net \
           -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1521/FREEPDB1 \
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT \
-          -E SPRING_DATASOURCE_PASSWORD=uatpass \
+          -e SPRING_DATASOURCE_PASSWORD=uatpass \
           -e APP_FRONTEND_URL=http://localhost:8081 \
           -p 9091:8080 \
           my-app-backend:uat
