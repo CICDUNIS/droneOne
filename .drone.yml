@@ -2,6 +2,10 @@ kind: pipeline
 type: docker
 name: ci/drone/pr  
 
+platform:
+  os: linux
+  arch: arm64
+
 services:
   - name: test-db-service
     image: gvenzl/oracle-free:latest
@@ -87,6 +91,10 @@ trigger:
 kind: pipeline
 type: docker
 name: deployment
+
+platform:
+  os: linux
+  arch: arm64
 
 steps:
   - name: build-backend
