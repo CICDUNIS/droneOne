@@ -15,7 +15,7 @@ services:
 
   drone-server:
     image: drone/drone:latest
-    container_name: drone-server
+    container_name: droneOne-server
     volumes:
       - drone-data:/data
     networks:
@@ -30,7 +30,7 @@ services:
 
   drone-runner:
     image: drone/drone-runner-docker:latest
-    container_name: drone-runner
+    container_name: droneOne-runner
     depends_on:
       - drone-server
     volumes:
@@ -47,7 +47,7 @@ services:
 
   sonarqube:
     image: sonarqube:lts-community 
-    container_name: sonarqube
+    container_name: sonarqubeDrone
     ports:
       - "8082:9000" 
     networks:
