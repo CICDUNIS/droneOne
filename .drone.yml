@@ -8,9 +8,9 @@ services:
     networks:
       - local-cicd-net
     environment:
-      - ORACLE_PASSWORD=testpass
-      - APP_USER=PIPELINE_USER
-      - APP_USER_PASSWORD=testpass
+      ORACLE_PASSWORD: testpass
+      APP_USER: PIPELINE_USER
+      APP_USER_PASSWORD: testpass
 
 steps:
   - name: frontend-test
@@ -83,6 +83,7 @@ trigger:
     - master
 
 ---
+
 kind: pipeline
 type: docker
 name: deployment
@@ -201,3 +202,4 @@ trigger:
     - dev
     - uat
     - master
+
