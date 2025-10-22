@@ -31,7 +31,7 @@ steps:
       - cd pharmacy
       - >
         mvn verify sonar:sonar
-        -Dsonar.host.url=http://sonarqubeDrone:9000
+        -Dsonar.host.url=http://sonarqube:9000
         -Dsonar.token=$SONAR_TOKEN
     depends_on:
       - frontend-test
