@@ -59,7 +59,6 @@ services:
       - DOCKER_HOST=tcp://dockerOne-dind:2375
       - DRONE_RUNNER_CAPACITY=2
       - DRONE_RUNNER_NAME=local-arm64-runner
-      - DRONE_RUNNER_NETWORKS=local-cicd-net
 
   sonarqube:
     image: sonarqube:lts-community
