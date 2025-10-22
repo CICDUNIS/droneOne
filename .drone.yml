@@ -112,11 +112,6 @@ platform:
 steps:
   - name: build-backend
     image: docker:20.10
-    privileged: true
-    volumes:
-      - name: dockersock
-        host:
-          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-backend:${DRONE_BRANCH} -f pharmacy/Dockerfile ./pharmacy
     when:
@@ -124,11 +119,6 @@ steps:
 
   - name: build-frontend
     image: docker:20.10
-    privileged: true
-    volumes:
-      - name: dockersock
-        host:
-          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-frontend:${DRONE_BRANCH} -f frontend/Dockerfile ./frontend
     when:
@@ -136,11 +126,6 @@ steps:
 
   - name: deploy-dev
     image: docker:20.10
-    privileged: true
-    volumes:
-      - name: dockersock
-        host:
-          path: /var/run/docker.sock
     commands:
       - docker stop backend-dev || true && docker rm backend-dev || true
       - docker stop frontend-dev || true && docker rm frontend-dev || true
@@ -151,13 +136,13 @@ steps:
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_LOCAL \
           -e SPRING_DATASOURCE_PASSWORD=devpass \
           -e APP_FRONTEND_URL=http://localhost:8080 \
-          -p 9090:8080 \
+          -p 8080:8080 \
           my-app-backend:dev
       - |
         docker run -d --restart always --name frontend-dev \
           --network local-cicd-net \
           -e NGINX_PROXY_PASS=http://backend-dev:8080 \
-          -p 8080:80 \
+          -p 80:80 \
           my-app-frontend:dev
     depends_on: [build-backend, build-frontend]
     when:
@@ -165,11 +150,6 @@ steps:
 
   - name: deploy-uat
     image: docker:20.10
-    privileged: true
-    volumes:
-      - name: dockersock
-        host:
-          path: /var/run/docker.sock
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
@@ -180,13 +160,13 @@ steps:
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT \
           -e SPRING_DATASOURCE_PASSWORD=uatpass \
           -e APP_FRONTEND_URL=http://localhost:8081 \
-          -p 9091:8080 \
+          -p 8081:8080 \
           my-app-backend:uat
       - |
         docker run -d --restart always --name frontend-uat \
           --network local-cicd-net \
           -e NGINX_PROXY_PASS=http://backend-uat:8080 \
-          -p 8081:80 \
+          -p 81:80 \
           my-app-frontend:uat
     depends_on: [build-backend, build-frontend]
     when:
@@ -194,11 +174,6 @@ steps:
 
   - name: deploy-prod
     image: docker:20.10
-    privileged: true
-    volumes:
-      - name: dockersock
-        host:
-          path: /var/run/docker.sock
     commands:
       - docker stop backend-prod || true && docker rm backend-prod || true
       - docker stop frontend-prod || true && docker rm frontend-prod || true
@@ -209,18 +184,17 @@ steps:
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD \
           -e SPRING_DATASOURCE_PASSWORD=prodpass \
           -e APP_FRONTEND_URL=http://localhost:8083 \
-          -p 9092:8080 \
+          -p 8082:8080 \
           my-app-backend:master
       - |
         docker run -d --restart always --name frontend-prod \
           --network local-cicd-net \
           -e NGINX_PROXY_PASS=http://backend-prod:8080 \
-          -p 8083:80 \
+          -p 83:80 \
           my-app-frontend:master
     depends_on: [build-backend, build-frontend]
     when:
       branch: master
-
 trigger:
   event:
     - push
