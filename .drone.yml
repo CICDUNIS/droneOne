@@ -95,7 +95,7 @@ steps:
     trigger:
       event:
         - pull_request
-      branch:
+      target:
         - dev
         - uat
         - master
