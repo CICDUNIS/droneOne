@@ -90,15 +90,15 @@ steps:
           echo "SonarQube Quality Gate FAILED. Check SonarQube UI for details."
           exit 1 
         fi
-    depends_on: [backend-test-and-analyze]    
+    depends_on: [backend-test-and-analyze]
 
-    trigger:
-      event:
-        - pull_request
-      target:
-        - dev
-        - uat
-        - master
+trigger:
+  event:
+    - pull_request
+  branch:
+    - dev
+    - uat
+    - master
 
 ---
 kind: pipeline
@@ -112,6 +112,7 @@ platform:
 steps:
   - name: build-backend
     image: docker:20.10
+    privileged: true
     volumes:
       - name: dockersock
         host:
@@ -123,6 +124,7 @@ steps:
 
   - name: build-frontend
     image: docker:20.10
+    privileged: true
     volumes:
       - name: dockersock
         host:
@@ -134,6 +136,7 @@ steps:
 
   - name: deploy-dev
     image: docker:20.10
+    privileged: true
     volumes:
       - name: dockersock
         host:
@@ -162,6 +165,7 @@ steps:
 
   - name: deploy-uat
     image: docker:20.10
+    privileged: true
     volumes:
       - name: dockersock
         host:
@@ -190,6 +194,7 @@ steps:
 
   - name: deploy-prod
     image: docker:20.10
+    privileged: true
     volumes:
       - name: dockersock
         host:
