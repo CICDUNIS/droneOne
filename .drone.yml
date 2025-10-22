@@ -43,41 +43,55 @@ steps:
         from_secret: SONAR_TOKEN
     commands:
       - |
-        sleep 15
-        SONAR_HOST="http://sonarqubeDrone:9000"
+        sleep 15 
+        SONAR_HOST="http://sonarqube:9000"
+        
+        # 1. Get the Task ID from the analysis report
         TASK_ID=$(cat pharmacy/target/sonar/report-task.txt | grep 'ceTaskId' | cut -d'=' -f2)
         TASK_URL="$SONAR_HOST/api/ce/task?id=$TASK_ID"
+        
         echo "Waiting for SonarQube analysis to complete..."
         ANALYSIS_ID=$(curl -s -u $SONAR_TOKEN: "$TASK_URL" | grep -o '"analysisId":"[^"]*' | cut -d'"' -f4)
+        
         while [ -z "$ANALYSIS_ID" ]; do
           sleep 5
           ANALYSIS_ID=$(curl -s -u $SONAR_TOKEN: "$TASK_URL" | grep -o '"analysisId":"[^"]*' | cut -d'"' -f4)
           echo "Analysis ID: $ANALYSIS_ID"
         done
+
+        # 2. Check if there are any new lines of code in this analysis
         METRICS_URL="$SONAR_HOST/api/measures/component?analysisId=$ANALYSIS_ID&metricKeys=ncloc_on_new_code"
         NEW_LINES=$(curl -s -u $SONAR_TOKEN: "$METRICS_URL" | grep -o '"value":"[^"]*' | cut -d'"' -f4 | sed 's/ //g' || echo "0")
-        if [ "$NEW_LINES" = "0" ]; then
+        
+        # --- THIS IS THE FIX ---
+        # We now check if the variable is "0" OR if it is empty (-z)
+        if [ "$NEW_LINES" = "0" ] || [ -z "$NEW_LINES" ]; then
           echo "No new lines of code found in this analysis."
           echo "Skipping Quality Gate check for empty/non-code commit."
-          exit 0
+          exit 0 # Pass the build
         fi
+
         echo "Found $NEW_LINES new lines of code. Proceeding with Quality Gate check."
+
+        # 3. Get Quality Gate status (original logic)
         GATE_URL="$SONAR_HOST/api/qualitygates/project_status?analysisId=$ANALYSIS_ID"
         GATE_STATUS=$(curl -s -u $SONAR_TOKEN: "$GATE_URL" | grep -o '"status":"[^"]*' | cut -d'"' -f4)
+
         while [ "$GATE_STATUS" = "PENDING" ]; do
           sleep 5
           GATE_STATUS=$(curl -s -u $SONAR_TOKEN: "$GATE_URL" | grep -o '"status":"[^"]*' | cut -d'"' -f4)
           echo "Quality Gate Status: $GATE_STATUS"
         done
+
         if [ "$GATE_STATUS" = "OK" ]; then
           echo "SonarQube Quality Gate PASSED"
           exit 0
         else
           echo "SonarQube Quality Gate FAILED. Check SonarQube UI for details."
-          exit 1
+          exit 1 
         fi
-    depends_on:
-      - backend-test-and-analyze
+    depends_on: [backend-test-and-analyze]    
+
     trigger:
       event:
         - pull_request
