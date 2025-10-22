@@ -64,7 +64,6 @@ steps:
         METRICS_URL="$SONAR_HOST/api/measures/component?analysisId=$ANALYSIS_ID&metricKeys=ncloc_on_new_code"
         NEW_LINES=$(curl -s -u $SONAR_TOKEN: "$METRICS_URL" | grep -o '"value":"[^"]*' | cut -d'"' -f4 | sed 's/ //g' || echo "0")
         
-        # --- THIS IS THE FIX ---
         # We now check if the variable is "0" OR if it is empty (-z)
         if [ "$NEW_LINES" = "0" ] || [ -z "$NEW_LINES" ]; then
           echo "No new lines of code found in this analysis."
@@ -102,7 +101,6 @@ steps:
         - master
 
 ---
-
 kind: pipeline
 type: docker
 name: deployment
@@ -114,104 +112,109 @@ platform:
 steps:
   - name: build-backend
     image: docker:20.10
+    volumes:
+      - name: dockersock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-backend:${DRONE_BRANCH} -f pharmacy/Dockerfile ./pharmacy
     when:
-      branch:
-        - dev
-        - uat
-        - master
+      branch: [dev, uat, master]
 
   - name: build-frontend
     image: docker:20.10
+    volumes:
+      - name: dockersock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker build -t my-app-frontend:${DRONE_BRANCH} -f frontend/Dockerfile ./frontend
     when:
-      branch:
-        - dev
-        - uat
-        - master
+      branch: [dev, uat, master]
 
   - name: deploy-dev
     image: docker:20.10
+    volumes:
+      - name: dockersock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-dev || true && docker rm backend-dev || true
       - docker stop frontend-dev || true && docker rm frontend-dev || true
-      - >
-        docker run -d --restart always --name backend-dev
-        --network local-cicd-net
-        -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1521/FREEPDB1
-        -e SPRING_DATASOURCE_USERNAME=PHARMACY_LOCAL
-        -e SPRING_DATASOURCE_PASSWORD=devpass
-        -e APP_FRONTEND_URL=http://localhost:8080
-        -p 9090:8080
-        my-app-backend:dev
-      - >
-        docker run -d --restart always --name frontend-dev
-        --network local-cicd-net
-        -e NGINX_PROXY_PASS=http://backend-dev:8080
-        -p 8080:80
-        my-app-frontend:dev
-    depends_on:
-      - build-backend
-      - build-frontend
+      - |
+        docker run -d --restart always --name backend-dev \
+          --network local-cicd-net \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-dev:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_USERNAME=PHARMACY_LOCAL \
+          -e SPRING_DATASOURCE_PASSWORD=devpass \
+          -e APP_FRONTEND_URL=http://localhost:8080 \
+          -p 9090:8080 \
+          my-app-backend:dev
+      - |
+        docker run -d --restart always --name frontend-dev \
+          --network local-cicd-net \
+          -e NGINX_PROXY_PASS=http://backend-dev:8080 \
+          -p 8080:80 \
+          my-app-frontend:dev
+    depends_on: [build-backend, build-frontend]
     when:
-      branch:
-        - dev
+      branch: dev
 
   - name: deploy-uat
     image: docker:20.10
+    volumes:
+      - name: dockersock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
-      - >
-        docker run -d --restart always --name backend-uat
-        --network local-cicd-net
-        -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1521/FREEPDB1
-        -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT
-        -e SPRING_DATASOURCE_PASSWORD=uatpass
-        -e APP_FRONTEND_URL=http://localhost:8081
-        -p 9091:8080
-        my-app-backend:uat
-      - >
-        docker run -d --restart always --name frontend-uat
-        --network local-cicd-net
-        -e NGINX_PROXY_PASS=http://backend-uat:8080
-        -p 8081:80
-        my-app-frontend:uat
-    depends_on:
-      - build-backend
-      - build-frontend
+      - |
+        docker run -d --restart always --name backend-uat \
+          --network local-cicd-net \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-uat:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_USERNAME=PHARMACY_UAT \
+          -e SPRING_DATASOURCE_PASSWORD=uatpass \
+          -e APP_FRONTEND_URL=http://localhost:8081 \
+          -p 9091:8080 \
+          my-app-backend:uat
+      - |
+        docker run -d --restart always --name frontend-uat \
+          --network local-cicd-net \
+          -e NGINX_PROXY_PASS=http://backend-uat:8080 \
+          -p 8081:80 \
+          my-app-frontend:uat
+    depends_on: [build-backend, build-frontend]
     when:
-      branch:
-        - uat
+      branch: uat
 
   - name: deploy-prod
     image: docker:20.10
+    volumes:
+      - name: dockersock
+        host:
+          path: /var/run/docker.sock
     commands:
       - docker stop backend-prod || true && docker rm backend-prod || true
       - docker stop frontend-prod || true && docker rm frontend-prod || true
-      - >
-        docker run -d --restart always --name backend-prod
-        --network local-cicd-net
-        -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1521/FREEPDB1
-        -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD
-        -e SPRING_DATASOURCE_PASSWORD=prodpass
-        -e APP_FRONTEND_URL=http://localhost:8083
-        -p 9092:8080
-        my-app-backend:master
-      - >
-        docker run -d --restart always --name frontend-prod
-        --network local-cicd-net
-        -e NGINX_PROXY_PASS=http://backend-prod:8080
-        -p 8083:80
-        my-app-frontend:master
-    depends_on:
-      - build-backend
-      - build-frontend
+      - |
+        docker run -d --restart always --name backend-prod \
+          --network local-cicd-net \
+          -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-prod:1521/FREEPDB1 \
+          -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD \
+          -e SPRING_DATASOURCE_PASSWORD=prodpass \
+          -e APP_FRONTEND_URL=http://localhost:8083 \
+          -p 9092:8080 \
+          my-app-backend:master
+      - |
+        docker run -d --restart always --name frontend-prod \
+          --network local-cicd-net \
+          -e NGINX_PROXY_PASS=http://backend-prod:8080 \
+          -p 8083:80 \
+          my-app-frontend:master
+    depends_on: [build-backend, build-frontend]
     when:
-      branch:
-        - master
+      branch: master
 
 trigger:
   event:
