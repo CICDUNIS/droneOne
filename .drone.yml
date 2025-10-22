@@ -27,7 +27,7 @@ steps:
     environment:
       SONAR_TOKEN:
         from_secret: SONAR_TOKEN
-      MAVEN_OPTS: -Xmx2g
+      MAVEN_OPTS: -Xmx4g
     commands:
       - cd pharmacy
       - >
