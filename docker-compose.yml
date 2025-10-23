@@ -110,6 +110,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: backend-dev
     networks:
       - local-cicd-net
   
@@ -117,6 +118,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: frontend-dev
     networks:
       - local-cicd-net
   
@@ -124,6 +126,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: backend-uat
     networks:
       - local-cicd-net
   
@@ -131,6 +134,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: frontend-uat
     networks:
       - local-cicd-net
   
@@ -138,6 +142,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: backend-prod
     networks:
       - local-cicd-net
   
@@ -145,6 +150,7 @@ services:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
+    container_name: frontend-prod
     networks:
       - local-cicd-net
 
