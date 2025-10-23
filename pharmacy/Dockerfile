@@ -9,7 +9,7 @@ COPY src ./src
 
 RUN mvn verify
 
-FROM eclipse-temurin:17-jre-alpine
+FROM azul/zulu-openjdk-alpine:17-jre
 
 WORKDIR /app
 
