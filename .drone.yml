@@ -186,7 +186,7 @@ steps:
           -e SPRING_DATASOURCE_USERNAME=PHARMACY_PROD \
           -e SPRING_DATASOURCE_PASSWORD=prodpass \
           -e APP_FRONTEND_URL=http://localhost:8083 \
-          -p 8082:8080 \
+          -p 8083:8080 \
           my-app-backend:main
       - |
         docker run -d --restart always --name frontend-prod \
