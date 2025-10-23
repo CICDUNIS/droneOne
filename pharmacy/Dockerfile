@@ -9,7 +9,7 @@ COPY src ./src
 
 RUN mvn verify
 
-FROM amazoncorretto:17-alpine-jre
+FROM azul/zulu-openjdk-alpine:17-jre
 
 WORKDIR /app
 
