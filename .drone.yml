@@ -2,8 +2,6 @@ kind: pipeline
 type: docker
 name: ci/drone/pr
 
-network: local-cicd-net
-
 platform:
   os: linux
   arch: arm64
@@ -47,7 +45,7 @@ steps:
     commands:
       - |
         sleep 15 
-        SONAR_HOST="http:///host.docker.internal:8082"
+        SONAR_HOST="http://host.docker.internal:8082"
         
         # 1. Get the Task ID from the analysis report
         TASK_ID=$(cat pharmacy/target/sonar/report-task.txt | grep 'ceTaskId' | cut -d'=' -f2)
@@ -114,8 +112,7 @@ platform:
 steps:
   - name: build-backend
     image: docker:20.10
-    environment:
-      DOCKER_HOST: tcp://docker-dind:2375
+    privileged: true
     commands:
       - docker build -t my-app-backend:${DRONE_BRANCH} -f pharmacy/Dockerfile ./pharmacy
     when:
@@ -123,8 +120,7 @@ steps:
 
   - name: build-frontend
     image: docker:20.10
-    environment:
-      DOCKER_HOST: tcp://docker-dind:2375
+    privileged: true
     commands:
       - docker build -t my-app-frontend:${DRONE_BRANCH} -f frontend/Dockerfile ./frontend
     when:
@@ -132,8 +128,7 @@ steps:
 
   - name: deploy-dev
     image: docker:20.10
-    environment:
-      DOCKER_HOST: tcp://docker-dind:2375
+    privileged: true
     commands:
       - docker stop backend-dev || true && docker rm backend-dev || true
       - docker stop frontend-dev || true && docker rm frontend-dev || true
@@ -158,8 +153,7 @@ steps:
 
   - name: deploy-uat
     image: docker:20.10
-    environment:
-      DOCKER_HOST: tcp://docker-dind:2375
+    privileged: true
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
@@ -184,8 +178,7 @@ steps:
 
   - name: deploy-prod
     image: docker:20.10
-    environment:
-      DOCKER_HOST: tcp://docker-dind:2375
+    privileged: true
     commands:
       - docker stop backend-prod || true && docker rm backend-prod || true
       - docker stop frontend-prod || true && docker rm frontend-prod || true
