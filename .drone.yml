@@ -81,6 +81,40 @@ steps:
           exit 1
         fi
     depends_on: [backend-test-and-analyze]
+
+  - name: notify-on-failure
+    image: drillster/drone-email
+    settings:
+      host: smtp.mail.yahoo.com
+      port: 465
+      ssl: true
+      username:
+        from_secret: SMTP_USERNAME
+      password:
+        from_secret: SMTP_PASSWORD
+      from: nightowlgt@yahoo.com  
+      recipients:
+        - JAFY.FergusonY@gmail.com   
+        - jflores@unis.edu.gt    
+      subject: "[CI FAILURE] {{repo.name}} - Build #{{build.number}} FAILED"
+      body: |
+        The pipeline for {{repo.name}} on branch {{build.branch}} has failed.
+
+        Build Number: {{build.number}}
+        Commit: {{commit.sha}}
+        Author: {{commit.author}}
+        Message: {{commit.message}}
+
+        Step '{{step.name}}' failed. Please review the logs:
+        {{build.link}}
+    when:
+      status: [ failure ]
+    depends_on:
+      - frontend-test
+      - backend-test-and-analyze
+      - sonarqube-quality-gate
+
+
 trigger:
   event:
     - pull_request
@@ -148,7 +182,7 @@ steps:
 
   - name: deploy-uat
     image: docker:20.10
-    # privileged: true <-- REMOVED
+    
     commands:
       - docker stop backend-uat || true && docker rm backend-uat || true
       - docker stop frontend-uat || true && docker rm frontend-uat || true
