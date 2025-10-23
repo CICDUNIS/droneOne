@@ -29,16 +29,21 @@ services:
 
   docker-dind:
     image: docker:dind
-    container_name: dockerOne-dind
+    container_name: dockerOne-dind 
     privileged: true
     networks:
       - local-cicd-net
     volumes:
       - dind-data:/var/lib/docker
     command: ["dockerd", "--host=tcp://0.0.0.0:2375", "--tls=false"]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2375"] 
+      interval: 2s
+      timeout: 10s
+      retries: 30
     ports:
-      - "8080:80"     
-      - "9090:8080"   
+      - "8080:80"
+      - "9090:8080"
       - "8081:81"
       - "9091:8081"
       - "8083:83"
@@ -48,15 +53,17 @@ services:
     image: drone/drone-runner-docker:latest
     container_name: droneOne-runner
     depends_on:
-      - drone-server
-      - docker-dind  
+      docker-dind:
+        condition: service_healthy
+      drone-server:
+        condition: service_started
     networks:
       - local-cicd-net
     environment:
       - DRONE_RPC_PROTO=http
       - DRONE_RPC_HOST=drone-server
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET:?Please set your DRONE_RPC_SECRET}
-      - DOCKER_HOST=tcp://dockerOne-dind:2375
+      - DOCKER_HOST=tcp://docker-dind:2375 
       - DRONE_RUNNER_CAPACITY=2
       - DRONE_RUNNER_NAME=local-arm64-runner
 
