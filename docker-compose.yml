@@ -27,6 +27,7 @@ services:
       - DRONE_SERVER_PROTO=https
       - DRONE_USER_CREATE=username:${GITHUB_LEAD_DEV_USERNAME},admin:true
 
+
   drone-runner:
     image: drone/drone-runner-docker:latest
     container_name: droneOne-runner
@@ -34,7 +35,7 @@ services:
       drone-server:
         condition: service_started
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock 
     user: "0" 
     networks:
       - local-cicd-net
@@ -56,10 +57,10 @@ services:
       - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     volumes:
       - sonar-conf:/opt/sonarqube/conf
-      - sonar-data:/opt/sonarqube/data
-      - sonar-extensions:/opt/sonarqube/extensions
-      - sonar-logs:/opt/sonarqube/logs
-
+      - sonar-data:/opt/sonarbe/data
+      - sonar-extensions:/opt/sonarbe/extensions
+      - sonar-logs:/opt/sonarbe/logs
+  
   oracle-dev:
     image: gvenzl/oracle-free:latest
     container_name: oracle-dev
@@ -74,7 +75,7 @@ services:
     volumes:
       - ./oracle-data-dev:/opt/oracle/oradata
       - ./db-scripts:/docker-entrypoint-initdb.d
-
+  
   oracle-uat:
     image: gvenzl/oracle-free:latest
     container_name: oracle-uat
@@ -89,7 +90,7 @@ services:
     volumes:
       - ./oracle-data-uat:/opt/oracle/oradata
       - ./db-scripts:/docker-entrypoint-initdb.d
-
+  
   oracle-prod:
     image: gvenzl/oracle-free:latest
     container_name: oracle-prod
@@ -104,37 +105,42 @@ services:
     volumes:
       - ./oracle-data-prod:/opt/oracle/oradata
       - ./db-scripts:/docker-entrypoint-initdb.d
-
+  
   backend-dev:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
     networks:
       - local-cicd-net
+  
   frontend-dev:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
     networks:
       - local-cicd-net
+  
   backend-uat:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
     networks:
       - local-cicd-net
+  
   frontend-uat:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
     networks:
       - local-cicd-net
+  
   backend-prod:
     image: alpine:latest
     command: "sleep infinity"
     restart: "no"
     networks:
       - local-cicd-net
+  
   frontend-prod:
     image: alpine:latest
     command: "sleep infinity"
