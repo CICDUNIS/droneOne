@@ -27,43 +27,21 @@ services:
       - DRONE_SERVER_PROTO=https
       - DRONE_USER_CREATE=username:${GITHUB_LEAD_DEV_USERNAME},admin:true
 
-  docker-dind:
-    image: docker:dind
-    container_name: dockerOne-dind 
-    privileged: true
-    networks:
-      - local-cicd-net
-    volumes:
-      - dind-data:/var/lib/docker
-    command: ["dockerd", "--host=tcp://0.0.0.0:2375", "--tls=false"]
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "2375"] 
-      interval: 2s
-      timeout: 10s
-      retries: 30
-    ports:
-      - "8080:80"
-      - "9090:8080"
-      - "8081:81"
-      - "9091:8081"
-      - "8083:83"
-      - "9092:8082"
-
   drone-runner:
     image: drone/drone-runner-docker:latest
     container_name: droneOne-runner
     depends_on:
-      docker-dind:
-        condition: service_healthy
       drone-server:
         condition: service_started
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: "0" 
     networks:
       - local-cicd-net
     environment:
       - DRONE_RPC_PROTO=http
       - DRONE_RPC_HOST=drone-server
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET:?Please set your DRONE_RPC_SECRET}
-      - DOCKER_HOST=tcp://docker-dind:2375 
       - DRONE_RUNNER_CAPACITY=2
       - DRONE_RUNNER_NAME=local-arm64-runner
 
@@ -130,13 +108,13 @@ services:
   backend-dev:
     image: alpine:latest
     command: "sleep infinity"
-    restart: "no" 
+    restart: "no"
     networks:
       - local-cicd-net
   frontend-dev:
     image: alpine:latest
     command: "sleep infinity"
-    restart: "no" 
+    restart: "no"
     networks:
       - local-cicd-net
   backend-uat:
@@ -165,7 +143,6 @@ services:
       - local-cicd-net
 
 volumes:
-  dind-data: 
   drone-data:
   sonar-conf:
   sonar-data:
@@ -179,4 +156,3 @@ networks:
   local-cicd-net:
     driver: bridge
     name: local-cicd-net
-
