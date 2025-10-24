@@ -362,4 +362,10 @@ class MedicamentoServiceImplTest {
         assertEquals(1, result.size());
         verify(medicamentoRepository).findTop10ByOrderByIdDesc();
     }
+
+    @Test
+    void testPipelineFail() {
+	    fail("Intentional failure");
+    }
+
 }
