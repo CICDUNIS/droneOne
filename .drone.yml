@@ -18,7 +18,7 @@ steps:
     commands:
       - cd frontend
       - npm install
-      - echo "Frontend tests passed"
+      - exit 1
   - name: backend-test-and-analyze
     image: maven:3.9-eclipse-temurin-17
     environment:
