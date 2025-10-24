@@ -18,7 +18,7 @@ steps:
     commands:
       - cd frontend
       - npm install
-      - echo "Frontend tests passed"
+      - exit 1
   - name: backend-test-and-analyze
     image: maven:3.9-eclipse-temurin-17
     environment:
@@ -98,16 +98,16 @@ steps:
         - jflores@unis.edu.gt    
       subject: "[CI FAILURE] {{repo.name}} - Build #{{build.number}} FAILED"
       body: |
-        The pipeline for {{repo.name}} on branch {{build.branch}} has failed.
+        Pull Request #{{build.pull}} (from '{{build.source}}' to '{{build.target}}') has failed.
 
+        Repository: {{repo.name}}
         Build Number: {{build.number}}
         Commit: {{commit.sha}}
         Author: {{commit.author}}
         Message: {{commit.message}}
 
-        Step '{{step.name}}' failed. Please review the logs:
-        {{build.link}}
-    when:
+        A step in the pipeline failed. Please review the logs:
+        {{build.link}}    when:
       status: [ failure ]
     depends_on:
       - frontend-test
