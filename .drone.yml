@@ -98,17 +98,16 @@ steps:
         - jflores@unis.edu.gt    
       subject: "[CI FAILURE] {{repo.name}} - Build #{{build.number}} FAILED"
       body: |
-        Pull Request #{{build.pull}} (from '{{build.source}}' to '{{build.target}}') has failed.
+        The pipeline for {{repo.name}} on branch {{build.source}} has failed.
 
-        Repository: {{repo.name}}
         Build Number: {{build.number}}
         Commit: {{commit.sha}}
         Author: {{commit.author}}
         Message: {{commit.message}}
 
-        A step in the pipeline failed. Please review the logs:
-        {{build.link}}    
-      when:
+        Step '{{step.name}}' failed. Please review the logs:
+        {{build.link}}
+    when:
       status: [ failure ]
     depends_on:
       - frontend-test
