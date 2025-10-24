@@ -107,7 +107,8 @@ steps:
         Message: {{commit.message}}
 
         A step in the pipeline failed. Please review the logs:
-        {{build.link}}    when:
+        {{build.link}}    
+      when:
       status: [ failure ]
     depends_on:
       - frontend-test
